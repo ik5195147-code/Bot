@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Hosting Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+
+        .dashboard {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            background: #f5f5f5;
+        }
+
+        .dashboard.active {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            margin: 10px 0;
+        }
+
+        .sidebar button {
+            background: none;
+            border: none;
+            color: white;
+            width: 100%;
+            text-align: left;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .sidebar button:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .sidebar button.active {
+            background: #667eea;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="file"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        button.secondary {
+            background: #95a5a6;
+        }
+
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        button.danger {
+            background: #e74c3c;
+        }
+
+        button.danger:hover {
+            background: #c0392b;
+        }
+
+        button.success {
+            background: #27ae60;
+        }
+
+        button.success:hover {
+            background: #229954;
+        }
+
+        .bot-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .bot-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .bot-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .bot-status.running {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .bot-status.stopped {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .bot-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .bot-actions button {
+            flex: 1;
+        }
+
+        .file-tree {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .file-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-name {
+            flex: 1;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .file-actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .console {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tabs button {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tabs button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-container {
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Pages -->
+    <div class="auth-container" id="authContainer">
+        <div id="loginPage">
+            <h1 style="text-align: center; margin-bottom: 30px;">🤖 Bot Hosting Panel</h1>
+            <form onsubmit="login(event)">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" style="width: 100%;">Login</button>
+                <p style="text-align: center; margin-top: 15px;">
+                    Don't have an account? <a href="#" onclick="switchToRegister(event)" style="color: #667eea; cursor: pointer;">Register</a>
+                </p>
+            </form>
+        </div>
+
+        <div id="registerPage" style="display: none;">
+            <h1 style="text-align: center; margin-bottom: 30px;">🤖 Create Account</h1>
+            <form onsubmit="register(event)">
+                <div class="form-group">
+                    <label for="regUsername">Username</label>
+                    <input type="text" id="regUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email</label>
+                    <input type="email" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" required>
+                </div>
+                <button type="submit" style="width: 100%;">Register</button>
+                <p style="text-align: center; margin-top: 15px;">
+                    Already have an account? <a href="#" onclick="switchToLogin(event)" style="color: #667eea; cursor: pointer;">Login</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <div class="sidebar">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Panel</h2>
+                <button onclick="logout()" style="width: auto; padding: 5px;">Logout</button>
+            </div>
+            <ul>
+                <li><button onclick="switchPage('home')" class="sidebar-btn active">🏠 Home</button></li>
+                <li><button onclick="switchPage('bots')" class="sidebar-btn">🤖 My Bots</button></li>
+                <li><button onclick="switchPage('create')" class="sidebar-btn">➕ New Bot</button></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <!-- Home Page -->
+            <div id="homePage" class="page active">
+                <h1>Welcome to Bot Hosting Panel</h1>
+                <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                    <h2>Getting Started</h2>
+                    <p>Welcome! Here's what you can do:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>✨ Create and manage multiple bots</li>
+                        <li>▶️ Start, stop, and restart bots with a click</li>
+                        <li>📁 Upload, manage, and edit bot files</li>
+                        <li>📊 Monitor logs in real-time</li>
+                        <li>📦 Extract and manage ZIP files</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bots Page -->
+            <div id="botsPage" class="page">
+                <h1>My Bots</h1>
+                <div id="botsList" class="grid"></div>
+            </div>
+
+            <!-- Create Bot Page -->
+            <div id="createPage" class="page">
+                <h1>Create New Bot</h1>
+                <form onsubmit="createBot(event)" style="max-width: 500px;">
+                    <div class="form-group">
+                        <label for="botName">Bot Name</label>
+                        <input type="text" id="botName" required placeholder="my-awesome-bot">
+                    </div>
+                    <button type="submit">Create Bot</button>
+                </form>
+            </div>
+
+            <!-- Bot Details Page (shown in modal) -->
+            <div id="botDetailsModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="botDetailsTitle">Bot Details</h2>
+                        <button class="close-btn" onclick="closeBotDetails()">×</button>
+                    </div>
+
+                    <div id="botDetailsContent">
+                        <!-- Tabs -->
+                        <div class="tabs">
+                            <button class="bot-tab-btn active" onclick="switchBotTab('details')">Details</button>
+                            <button class="bot-tab-btn" onclick="switchBotTab('files')">Files</button>
+                            <button class="bot-tab-btn" onclick="switchBotTab('logs')">Logs</button>
+                        </div>
+
+                        <!-- Details Tab -->
+                        <div id="detailsTab" class="bot-tab-content active">
+                            <div style="margin-bottom: 15px;">
+                                <strong>Status:</strong> <span id="detailsStatus" class="bot-status"></span>
+                            </div>
+                            <div id="botActions" style="display: flex; gap: 10px;">
+                                <button class="success" onclick="startBot()">▶️ Start</button>
+                                <button class="danger" onclick="stopBot()">⏹️ Stop</button>
+                                <button onclick="restartBot()">🔄 Restart</button>
+                            </div>
+                        </div>
+
+                        <!-- Files Tab -->
+                        <div id="filesTab" class="bot-tab-content" style="display: none;">
+                            <div class="form-group">
+                                <label for="uploadFile">Upload File</label>
+                                <input type="file" id="uploadFile" onchange="uploadFile(event)">
+                            </div>
+                            <div class="form-group">
+                                <label for="unzipFile">File to Unzip (if any)</label>
+                                <select id="unzipFile">
+                                    <option value="">Select a file...</option>
+                                </select>
+                                <button type="button" onclick="unzipFile()" style="margin-top: 10px;">Unzip</button>
+                            </div>
+                            <div id="filesList" class="file-tree">
+                                <div style="color: #7f8c8d;">Loading files...</div>
+                            </div>
+                        </div>
+
+                        <!-- Logs Tab -->
+                        <div id="logsTab" class="bot-tab-content" style="display: none;">
+                            <div style="margin-bottom: 10px;">
+                                <button onclick="refreshLogs()">🔄 Refresh Logs</button>
+                            </div>
+                            <div id="logConsole" class="console">
+                                <div style="color: #888;">Waiting for logs...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let currentBot = null;
+
+        // Auth Functions
+        function switchToRegister(e) {
+            e.preventDefault();
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('registerPage').style.display = 'block';
+        }
+
+        function switchToLogin(e) {
+            e.preventDefault();
+            document.getElementById('loginPage').style.display = 'block';
+            document.getElementById('registerPage').style.display = 'none';
+        }
+
+        async function login(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', data.access_token);
+                    token = data.access_token;
+                    showDashboard();
+                    loadBots();
+                } else {
+                    alert('Login failed: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function register(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', data.access_token);
+                    token = data.access_token;
+                    showDashboard();
+                    loadBots();
+                } else {
+                    alert('Registration failed: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            location.reload();
+        }
+
+        function showDashboard() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+        }
+
+        if (token) {
+            showDashboard();
+        }
+
+        // Navigation
+        function switchPage(pageName) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(pageName + 'Page').classList.add('active');
+            event.target.classList.add('active');
+
+            if (pageName === 'bots') {
+                loadBots();
+            }
+        }
+
+        // Bot Management
+        async function loadBots() {
+            try {
+                const response = await fetch('/api/bots', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                displayBots(data.bots || []);
+            } catch (error) {
+                console.error('Error loading bots:', error);
+            }
+        }
+
+        function displayBots(bots) {
+            const botsList = document.getElementById('botsList');
+            if (bots.length === 0) {
+                botsList.innerHTML = '<p>No bots yet. Create one to get started!</p>';
+                return;
+            }
+
+            botsList.innerHTML = bots.map(bot => `
+                <div class="bot-card">
+                    <h3>${bot.name}</h3>
+                    <span class="bot-status ${bot.status}">${bot.status}</span>
+                    <div class="bot-actions">
+                        <button onclick="openBotDetails('${bot.name}')">📋 Manage</button>
+                        <button class="danger" onclick="deleteBot('${bot.name}')">🗑️ Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function createBot(e) {
+            e.preventDefault();
+            const botName = document.getElementById('botName').value;
+
+            try {
+                const response = await fetch(`/api/bots/${botName}/create`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    alert('Bot created successfully!');
+                    document.getElementById('botName').value = '';
+                    loadBots();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function openBotDetails(botName) {
+            currentBot = botName;
+            document.getElementById('botDetailsTitle').textContent = botName;
+            document.getElementById('botDetailsModal').classList.add('active');
+            loadBotStatus();
+            loadBotFiles();
+        }
+
+        function closeBotDetails() {
+            document.getElementById('botDetailsModal').classList.remove('active');
+            currentBot = null;
+        }
+
+        function switchBotTab(tabName) {
+            document.querySelectorAll('.bot-tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.bot-tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').style.display = 'block';
+            event.target.classList.add('active');
+
+            if (tabName === 'logs') {
+                refreshLogs();
+            }
+        }
+
+        async function loadBotStatus() {
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/status`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                const statusEl = document.getElementById('detailsStatus');
+                statusEl.textContent = data.status.toUpperCase();
+                statusEl.className = `bot-status ${data.status}`;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function startBot() {
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/start`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    alert('Bot started!');
+                    loadBotStatus();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function stopBot() {
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/stop`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    alert('Bot stopped!');
+                    loadBotStatus();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function restartBot() {
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/restart`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    alert('Bot restarted!');
+                    loadBotStatus();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function loadBotFiles() {
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/files`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                displayFiles(data.files || []);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayFiles(files) {
+            const filesList = document.getElementById('filesList');
+            if (files.length === 0) {
+                filesList.innerHTML = '<p>No files yet.</p>';
+                return;
+            }
+
+            filesList.innerHTML = files.map(file => `
+                <div class="file-item">
+                    <div class="file-name">
+                        ${file.type === 'directory' ? '📁' : '📄'} ${file.name}
+                        ${file.size ? ` (${(file.size / 1024).toFixed(2)} KB)` : ''}
+                    </div>
+                    <div class="file-actions">
+                        ${file.type === 'file' ? `
+                            <button onclick="editFile('${file.name}')">✏️</button>
+                            <button class="danger" onclick="deleteFile('${file.name}')">🗑️</button>
+                        ` : `
+                            <button class="danger" onclick="deleteFile('${file.name}')">🗑️</button>
+                        `}
+                    </div>
+                </div>
+            `).join('');
+
+            // Update unzip dropdown
+            const unzipSelect = document.getElementById('unzipFile');
+            const zipFiles = files.filter(f => f.name.endsWith('.zip'));
+            unzipSelect.innerHTML = '<option value="">Select a file...</option>' +
+                zipFiles.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+        }
+
+        async function uploadFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('File uploaded!');
+                    loadBotFiles();
+                    e.target.value = '';
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function unzipFile() {
+            const filename = document.getElementById('unzipFile').value;
+            if (!filename) {
+                alert('Please select a file');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/unzip`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ filename })
+                });
+
+                if (response.ok) {
+                    alert('File unzipped!');
+                    loadBotFiles();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function deleteFile(filename) {
+            if (!confirm('Are you sure?')) return;
+
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/files/${filename}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    alert('File deleted!');
+                    loadBotFiles();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function editFile(filename) {
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/files/${filename}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                const newContent = prompt('Edit file content:', data.content);
+                if (newContent === null) return;
+
+                const updateResponse = await fetch(`/api/bots/${currentBot}/files/${filename}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: newContent })
+                });
+
+                if (updateResponse.ok) {
+                    alert('File saved!');
+                    loadBotFiles();
+                } else {
+                    const errData = await updateResponse.json();
+                    alert('Error: ' + errData.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function deleteBot(botName) {
+            if (!confirm('Are you sure? This will delete the bot and all its files!')) return;
+
+            try {
+                const response = await fetch(`/api/bots/${botName}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    alert('Bot deleted!');
+                    loadBots();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function refreshLogs() {
+            try {
+                const response = await fetch(`/api/bots/${currentBot}/logs`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                document.getElementById('logConsole').textContent = data.logs || 'No logs yet...';
+                document.getElementById('logConsole').scrollTop = document.getElementById('logConsole').scrollHeight;
+            } catch (error) {
+                document.getElementById('logConsole').textContent = 'Error loading logs: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
